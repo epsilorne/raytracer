@@ -18,9 +18,9 @@ export class Vector {
      */
     add(vec){
         return new Vector(
-            this.x += vec.x,
-            this.y += vec.y,
-            this.z += vec.z
+            this.x + vec.x,
+            this.y + vec.y,
+            this.z + vec.z
         )
     }
 
@@ -31,9 +31,9 @@ export class Vector {
      */
     subtract(vec){
         return new Vector(
-            this.x -= vec.x,
-            this.y -= vec.y,
-            this.z -= vec.z
+            this.x - vec.x,
+            this.y - vec.y,
+            this.z - vec.z
         )
     }
 
@@ -44,9 +44,9 @@ export class Vector {
      */
     scalar(k){
         return new Vector(
-            this.x *= k,
-            this.y *= k,
-            this.z *= k
+            this.x * k,
+            this.y * k,
+            this.z * k
         )
     }
 
