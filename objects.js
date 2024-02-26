@@ -6,10 +6,11 @@ export class Sphere {
      * @param {Vector} centre The centre of the sphere.
      * @param {Number} radius The radius of the sphere.
      */
-    constructor(x, y, z, radius, r, g, b){
+    constructor(x, y, z, radius, r, g, b, shiny){
         this.centre = new Vector(x, y, z);
         this.radius = radius;
         this.colour = new Vector(r, g, b);
+        this.shiny = shiny;
     }
 
     /**
