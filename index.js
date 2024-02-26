@@ -1,11 +1,11 @@
 import { Vector } from './vector.js';
 import { Sphere } from './objects.js';
 
-// DISPLAY PARAMETERS
+/* DISPLAY PARAMETERS */
 let canvasWidth = 512;
 let canvasHeight = 512;
 
-// OBJECTS AND LIGHTING TO BE RENDERED
+/* OBJECTS AND LIGHTING TO BE RENDERED */
 let scene = {
     objects: [ 
         new Sphere(-0.8, 0, -1, 1, 201, 26, 70),
@@ -19,13 +19,16 @@ let scene = {
     ]
 }
 
-// Initial setup
+/* INITIAL SETUP */
 const canvas = document.getElementById("display");
 canvas.width = canvasWidth;
 canvas.height = canvasHeight;
 let context = canvas.getContext('2d');
 let data = context.getImageData(0, 0, canvasWidth, canvasHeight);
 
+/**
+ * Renders each pixel on the canvas using our ray-tracing algorithm.
+ */
 function render() {
     for(let y = 0; y < canvasHeight; y++) {
         for(let x = 0; x < canvasWidth; x++) {
@@ -38,6 +41,14 @@ function render() {
     context.putImageData(data, 0, 0);
 }
 
+/**
+ * Helper function to draw an individual pixel by manipulating ImageData.data.
+ * @param {Number} x x-coordinate
+ * @param {Number} y y-coordinate
+ * @param {Number} r red
+ * @param {Number} g green
+ * @param {Number} b blue
+ */
 function drawPixel(x, y, r, g, b){
     // ImageData.data is an array where every 4 elements represents RGBA of a single pixel
     let index = x * 4 + y * canvasWidth * 4
@@ -47,6 +58,12 @@ function drawPixel(x, y, r, g, b){
     data.data[index + 3] = 255;
 }
 
+/**
+ * Casts a ray from the camera for the purposes of ray tracing.
+ * @param {Vector} origin The origin of the ray.
+ * @param {Vector} direction The direction of the ray (a unit vector).
+ * @returns The colour of where the ray has landed, otherwise the background colour.
+ */
 function trace(origin, direction) {
     let index = -1;
     let distance = NaN;
