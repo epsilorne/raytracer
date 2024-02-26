@@ -9,7 +9,9 @@ let canvasHeight = 512;
 let scene = {
     objects: [ 
         new Sphere(-0.8, 0, -1, 1, 201, 26, 70),
-        new Sphere(0.8, 0, 0, 1, 85, 199, 50) 
+        new Sphere(0.8, 0, 0, 1, 85, 199, 50),
+        new Sphere(0, -0.5, 1, 0.5, 68, 73, 201),
+        new Sphere(0, -995.9, -100, 1000, 255, 255, 255)
     ],
     lights: [ 
         new Vector(50, 100, 50),
@@ -84,7 +86,10 @@ function trace(origin, direction) {
         });
 
         if(!shadow){
-            return scene.objects[index].colour;
+            let diff = Math.max(0, (dir.dotProduct(norm)) * 0.8);
+            let spec = Math.pow(Math.max(0, dir.dotProduct(norm)), 70) * 0.4;
+
+            c = c.add(scene.objects[index].colour.scalar(diff).add(new Vector(spec, spec, spec)));
         }
     }
 
