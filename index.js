@@ -6,17 +6,15 @@ let canvasWidth = 512;
 let canvasHeight = 512;
 
 // OBJECTS AND LIGHTING TO BE RENDERED
-class Scene {
-    constructor(){
-        this.objects = [ 
-            new Sphere(0, 1, 0, 2, 200),
-            new Sphere(1, 0, 0.5, 1.5, 100)
-                    ];
-        this.lights = [ new Vector(0, 100, 0) ];
-    }
+let scene = {
+    objects: [ 
+        new Sphere(-0.8, 0, -1, 1, 201, 26, 70),
+        new Sphere(0.8, 0, 0, 1, 85, 199, 50) 
+    ],
+    lights: [ 
+        new Vector(50, 100, 50),
+    ]
 }
-
-let scene = new Scene();
 
 // Initial setup
 const canvas = document.getElementById("display");
@@ -29,18 +27,21 @@ function render() {
     for(let y = 0; y < canvasHeight; y++) {
         for(let x = 0; x < canvasWidth; x++) {
             let dir = new Vector(x - canvasWidth / 2, canvasHeight / 2 - y, -canvasHeight).unit();
-            let val = trace(new Vector(0, 1, 5), dir);
-            
-            // ImageData.data is an array where every 4 elements represents RGBA of a single pixel
-            let index = x * 4 + y * canvasWidth * 4
-            data.data[index + 0] = val;
-            data.data[index + 1] = val;
-            data.data[index + 2] = val;
-            data.data[index + 3] = 255;
+            let val = trace(new Vector(0, 0, 5), dir);
+            drawPixel(x, y, val.x, val.y, val.z);  
         }
     }
 
     context.putImageData(data, 0, 0);
+}
+
+function drawPixel(x, y, r, g, b){
+    // ImageData.data is an array where every 4 elements represents RGBA of a single pixel
+    let index = x * 4 + y * canvasWidth * 4
+    data.data[index + 0] = r;
+    data.data[index + 1] = g;
+    data.data[index + 2] = b;
+    data.data[index + 3] = 255;
 }
 
 function trace(origin, direction) {
@@ -57,12 +58,37 @@ function trace(origin, direction) {
         }
     }
 
-    // If there are no intersections, then render darkness
+    // If there are no intersections, then render the background
     if(index < 0){
-        return 0;
+        return new Vector(255, 255, 255);
     }
 
-    return scene.objects[index].colour;
+    // Calculate any shadows
+
+    // P is a coordinate representing the surface of a sphere
+    let p = origin.add(direction.scalar(distance));
+    let norm = (p.subtract(scene.objects[index].centre)).unit();
+
+    let c = scene.objects[index].colour.scalar(0.1);
+
+    for(let i = 0; i < scene.lights.length; i++) {
+        let light = scene.lights[i];
+        let dir = (light.subtract(p)).unit();
+
+        let shadow = false;
+
+        scene.objects.forEach((obj) => {
+            if(!isNaN(obj.intersection(p, dir))){
+                shadow = true;
+            }
+        });
+
+        if(!shadow){
+            return scene.objects[index].colour;
+        }
+    }
+
+    return c;
 }
 
 render();

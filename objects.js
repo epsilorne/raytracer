@@ -6,10 +6,10 @@ export class Sphere {
      * @param {Vector} centre The centre of the sphere.
      * @param {Number} radius The radius of the sphere.
      */
-    constructor(x, y, z, radius, colour){
+    constructor(x, y, z, radius, r, g, b){
         this.centre = new Vector(x, y, z);
         this.radius = radius;
-        this.colour = colour;
+        this.colour = new Vector(r, g, b);
     }
 
     /**
@@ -33,8 +33,8 @@ export class Sphere {
         let distance = (-b - sqd) / (2 * a);
         if (distance > 0.00001) return distance;
 
-        // distance = (-b + sqd) / (2 * a);
-        // if (distance > 0.01) return distance;
+        distance = (-b + sqd) / (2 * a);
+        if (distance > 0.01) return distance;
 
         return NaN;
     }
