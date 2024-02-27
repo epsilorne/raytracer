@@ -7,6 +7,7 @@ let CANVAS_HEIGHT = 512;
 
 let MAX_REFLECTION_ITERATIONS = 3;
 let REFLECTION_INTENSITY = 0.4;
+let LIGHT_INTENSITY = 1.0;
 
 /* OBJECTS AND LIGHTING TO BE RENDERED */
 let scene = {
@@ -20,7 +21,7 @@ let scene = {
         new Sphere(0, -996, -100, 1000, 255, 255, 255, false) // ground
     ],
     lights: [ 
-        new Vector(0, 50, 50),
+        new Vector(100, 100, 200),
     ]
 }
 
@@ -77,7 +78,6 @@ function trace(origin, direction, depth) {
     // Loop through all objects to find the nearest non-NaN intersection (i.e. object)
     for(let i = 0; i < scene.objects.length; i++) {
         let d = scene.objects[i].intersection(origin, direction);
-
         if(!isNaN(d) && (index < 0 || d < distance)) {
             distance = d;
             index = i;
@@ -88,8 +88,6 @@ function trace(origin, direction, depth) {
     if(index < 0){
         // sky blue
         return new Vector(158, 211, 222);
-        // white
-        // return new Vector(255, 255, 255);
     }
 
     /* CALCULATE REFLECTIONS AND SHADOWS */
@@ -116,9 +114,13 @@ function trace(origin, direction, depth) {
         });
 
         if(!shadow){
-            let diff = Math.max(0, (dir.dotProduct(norm)) * 0.8);
-            let spec = Math.pow(Math.max(0, dir.dotProduct(norm)), 70) * 0.4;
-            colour = colour.add(scene.objects[index].colour.scalar(diff).add(new Vector(spec, spec, spec)));
+            // Applying Lambert (diffuse) shading
+            let lambert = Math.max(0, dir.dotProduct(norm));
+            colour = colour.add((scene.objects[index].colour).scalar(lambert).scalar(LIGHT_INTENSITY));
+
+            // Applying Blinn-Phong (specular) reflection
+            let phong = Math.pow(clamp(norm.dotProduct(dir.unit())), 50);
+            colour = colour.add(new Vector(255, 255, 255).scalar(phong).scalar(LIGHT_INTENSITY));
         }
 
         if(depth < MAX_REFLECTION_ITERATIONS){
@@ -133,6 +135,15 @@ function trace(origin, direction, depth) {
     }
 
     return colour;
+}
+
+/**
+ * Clamps a given number between 0 and 1.
+ * @param {Number} num To be clamped.
+ * @returns Value between 0 and 1.
+ */
+function clamp(num){
+    return Math.min(Math.max(num, 0), 1);
 }
 
 render();
