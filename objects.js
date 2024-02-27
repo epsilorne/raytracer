@@ -1,4 +1,4 @@
-import { Vector } from './vector.js';
+import { Vector } from './Vector.js';
 
 export class Sphere {
     /**
@@ -14,9 +14,10 @@ export class Sphere {
     }
 
     /**
-     * 
+     * Handles sphere-ray collision detection.
      * @param {Vector} origin Where the ray comes from.
      * @param {Vector} direction A unit vector representing the ray's direction.
+     * @returns The distance from the origin to sphere surface, if it collides.
      */
     intersection(origin, direction){
         let p = origin.subtract(this.centre);

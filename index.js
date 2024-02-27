@@ -1,13 +1,16 @@
-import { Vector } from './vector.js';
-import { Sphere } from './objects.js';
+import { Vector } from './Vector.js';
+import { Sphere } from './Objects.js';
 
 /* DISPLAY & RENDERING PARAMETERS */
-let CANVAS_WIDTH = 512;
-let CANVAS_HEIGHT = 512;
+const CANVAS_WIDTH = 512;
+const CANVAS_HEIGHT = 512;
 
-let MAX_REFLECTION_ITERATIONS = 3;
-let REFLECTION_INTENSITY = 0.4;
-let LIGHT_INTENSITY = 1.0;
+const BACKGROUND_COLOUR = new Vector(158, 211, 222);
+
+const MAX_REFLECTION_ITERATIONS = 3;
+const REFLECTION_INTENSITY = 0.55;
+const DIFFUSE = 1.0;
+const SPECULAR = 0.6;
 
 /* OBJECTS AND LIGHTING TO BE RENDERED */
 let scene = {
@@ -72,67 +75,57 @@ function drawPixel(x, y, r, g, b){
  * @returns The colour of where the ray has landed, otherwise the background colour.
  */
 function trace(origin, direction, depth) {
-    let index = -1;
     let distance = NaN;
+    let closest = null;
 
     // Loop through all objects to find the nearest non-NaN intersection (i.e. object)
     for(let i = 0; i < scene.objects.length; i++) {
         let d = scene.objects[i].intersection(origin, direction);
-        if(!isNaN(d) && (index < 0 || d < distance)) {
+
+        if(!isNaN(d) && (closest == null || d < distance)) {
             distance = d;
-            index = i;
+            closest = scene.objects[i];
         }
     }
-
+    
     // If there are no intersections, then render the background
-    if(index < 0){
-        // sky blue
-        return new Vector(158, 211, 222);
-    }
+    if(closest == null) return BACKGROUND_COLOUR;
 
     /* CALCULATE REFLECTIONS AND SHADOWS */
+    // Pt represents the ray contact-point on the sphere
+    let pt = origin.add(direction.scalar(distance));
+    let norm = (pt.subtract(closest.centre)).unit();
+    let colour = closest.colour.scalar(0.1);
 
-    // P is a coordinate representing the surface of a sphere
-    let p = origin.add(direction.scalar(distance));
-    let norm = (p.subtract(scene.objects[index].centre)).unit();
+    scene.lights.forEach((light) => {
+        // The direction from the contact-point to light source
+        let lightDir = light.subtract(pt).unit();
+        let seenByLight = 1;
 
-    let colour = scene.objects[index].colour.scalar(0.1);
-
-    for(let i = 0; i < scene.lights.length; i++) {
-        let light = scene.lights[i];
-        // This direction is from the contact-point to the light
-        let dir = (light.subtract(p)).unit();
-        let shadow = false;
-
-        // Generate cast shadows for each object
-        scene.objects.forEach((obj) => {
-            /* If there is some kind of intersection between the point and the light,
-            cast a shadow. */
-            if(!isNaN(obj.intersection(p, dir))){
-                shadow = true;
+        /* Generate a cast shadow by checking if there's an obstruction
+        between the contact-point and light source. */
+        scene.objects.forEach((obj) => { 
+            if(!isNaN(obj.intersection(pt, lightDir))){
+                seenByLight = 0;
             }
         });
 
-        if(!shadow){
-            // Applying Lambert (diffuse) shading
-            let lambert = Math.max(0, dir.dotProduct(norm));
-            colour = colour.add((scene.objects[index].colour).scalar(lambert).scalar(LIGHT_INTENSITY));
+        // Apply Lambert (diffuse) shading
+        let lambert = Math.max(0, lightDir.dotProduct(norm));
+        colour = colour.add((closest.colour).scalar(lambert).scalar(DIFFUSE).scalar(seenByLight));
 
-            // Applying Blinn-Phong (specular) reflection
-            let phong = Math.pow(clamp(norm.dotProduct(dir.unit())), 50);
-            colour = colour.add(new Vector(255, 255, 255).scalar(phong).scalar(LIGHT_INTENSITY));
+        // Apply reflections recursively with a reflected ray
+        if(depth < MAX_REFLECTION_ITERATIONS && closest.shiny){
+            /* Uses the formula: r = -2 (d.n)n + d
+            where d = original direciton vector, n = normal vector */
+            let reflectDir = norm.scalar(-2 * direction.dotProduct(norm)).add(direction);
+            colour = colour.add(trace(pt, reflectDir, depth + 1).scalar(REFLECTION_INTENSITY));
         }
 
-        if(depth < MAX_REFLECTION_ITERATIONS){
-            // For shiny objects, we recursively trace with a reflected ray
-            if(scene.objects[index].shiny){;
-                /* Uses the formula: r = -2 (d.n)n + d
-                where d = original direciton vector, n = normal vector */
-                let reflectDir = norm.scalar(-2 * direction.dotProduct(norm)).add(direction);
-                colour = colour.add(trace(p, reflectDir, depth + 1).scalar(REFLECTION_INTENSITY));
-            }
-        }
-    }
+        // Applying Blinn-Phong (specular) reflection
+        let phong = Math.pow(clamp(norm.dotProduct(lightDir.unit())), 50);
+        colour = colour.add(new Vector(255, 255, 255).scalar(phong).scalar(SPECULAR).scalar(seenByLight));
+    });
 
     return colour;
 }
