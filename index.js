@@ -12,8 +12,12 @@ const REFLECTION_INTENSITY = 0.55;
 const DIFFUSE = 1.0;
 const SPECULAR = 0.6;
 
+/* CAMERA ROTATION */
+let camY = -0;
+
 /* OBJECTS AND LIGHTING TO BE RENDERED */
 let scene = {
+    camera: new Vector(0, 0, 5),
     objects: [ 
         // x, y, z, radius, r, g, b, shiny
 
@@ -35,18 +39,23 @@ canvas.height = CANVAS_HEIGHT;
 let context = canvas.getContext('2d');
 let data = context.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+const rotSlider = document.getElementById("rotSlider");
+rotSlider.oninput = function() {
+    camY = -rotSlider.value;
+    render();
+}
+
 /**
  * Renders each pixel on the canvas using our ray-tracing algorithm.
  */
 function render() {
     for(let y = 0; y < CANVAS_HEIGHT; y++) {
         for(let x = 0; x < CANVAS_WIDTH; x++) {
-            let dir = new Vector(x - CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - y, -CANVAS_HEIGHT).unit();
-            let val = trace(new Vector(0, 0, 5), dir, 0);
+            let dir = new Vector(x - CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - y, -CANVAS_HEIGHT).rotateY(camY).unit();
+            let val = trace(scene.camera, dir, 0);
             drawPixel(x, y, val.x, val.y, val.z);  
         }
     }
-
     context.putImageData(data, 0, 0);
 }
 
@@ -89,7 +98,9 @@ function trace(origin, direction, depth) {
     }
     
     // If there are no intersections, then render the background
-    if(closest == null) return BACKGROUND_COLOUR;
+    if(closest == null){
+        return BACKGROUND_COLOUR;
+    }
 
     /* CALCULATE REFLECTIONS AND SHADOWS */
     // Pt represents the ray contact-point on the sphere
@@ -112,7 +123,12 @@ function trace(origin, direction, depth) {
 
         // Apply Lambert (diffuse) shading
         let lambert = Math.max(0, lightDir.dotProduct(norm));
-        colour = colour.add((closest.colour).scalar(lambert).scalar(DIFFUSE).scalar(seenByLight));
+        if(!closest.shiny){
+            colour = colour.add((closest.colour).scalar(lambert).scalar(DIFFUSE).scalar(seenByLight));
+        }
+        else{
+            colour = colour.add((closest.colour).scalar(lambert).scalar(DIFFUSE).scalar(seenByLight).scalar(0.5));
+        }
 
         // Apply reflections recursively with a reflected ray
         if(depth < MAX_REFLECTION_ITERATIONS && closest.shiny){

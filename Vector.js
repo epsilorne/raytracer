@@ -72,4 +72,23 @@ export class Vector {
     unit(){
         return this.scalar(1 / this.length());
     }
+
+    /**
+     * Rotates a vector in the y-axis by a specified no. of radians.
+     * @param {*} angle Angle in radians.
+     * @returns Rotated vector.
+     */
+    rotateY(angle){
+        let rotMatrix = [
+            new Vector(Math.cos(angle), 0, Math.sin(angle)),
+            new Vector(0, 1, 0),
+            new Vector(-Math.sin(angle), 0, Math.cos(angle))
+        ];
+
+        return new Vector(
+            this.dotProduct(rotMatrix[0]),
+            this.dotProduct(rotMatrix[1]),
+            this.dotProduct(rotMatrix[2])
+        );
+    }
 }
