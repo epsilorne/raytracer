@@ -75,20 +75,35 @@ export class Vector {
 
     /**
      * Rotates a vector in the y-axis by a specified no. of radians.
-     * @param {*} angle Angle in radians.
+     * @param {Number} angle Angle in radians
      * @returns Rotated vector.
      */
-    rotateY(angle){
-        let rotMatrix = [
-            new Vector(Math.cos(angle), 0, Math.sin(angle)),
-            new Vector(0, 1, 0),
-            new Vector(-Math.sin(angle), 0, Math.cos(angle))
+    rotate(angle){
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+
+        const rotMatrix = [
+                new Vector(cos,   0,   sin),
+                new Vector( 0,    1,    0 ),
+                new Vector(-sin,  0,   cos)
         ];
 
-        return new Vector(
-            this.dotProduct(rotMatrix[0]),
-            this.dotProduct(rotMatrix[1]),
-            this.dotProduct(rotMatrix[2])
-        );
+        let x = this.dotProduct(rotMatrix[0]);
+        let y = this.dotProduct(rotMatrix[1]);
+        let z = this.dotProduct(rotMatrix[2]);
+
+        return new Vector(x, y, z);
+    }
+
+    /**
+     * Rotates a vector in the y-axis around a pivot-point by a specified
+     * no. of radians.
+     * @param {Number} angle Angle in radians.
+     * @param {Vector} pivot Pivot point vector.
+     * @returns Rotated vector.
+     */
+    rotatePivot(angle, pivot){
+        return this.subtract(pivot).rotate(angle).add(pivot);
     }
 }
+

@@ -12,8 +12,9 @@ const REFLECTION_INTENSITY = 0.55;
 const DIFFUSE = 1.0;
 const SPECULAR = 0.6;
 
-/* CAMERA ROTATION */
-let camY = -0;
+/* CAMERA POSITIONING */
+let CAMERA_ROTATION = -0;
+let CAMERA_PIVOT = new Vector(0, 0, 0);
 
 /* OBJECTS AND LIGHTING TO BE RENDERED */
 let scene = {
@@ -41,7 +42,7 @@ let data = context.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
 const rotSlider = document.getElementById("rotSlider");
 rotSlider.oninput = function() {
-    camY = -rotSlider.value;
+    CAMERA_ROTATION = -rotSlider.value;
     render();
 }
 
@@ -51,9 +52,14 @@ rotSlider.oninput = function() {
 function render() {
     for(let y = 0; y < CANVAS_HEIGHT; y++) {
         for(let x = 0; x < CANVAS_WIDTH; x++) {
-            let dir = new Vector(x - CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - y, -CANVAS_HEIGHT).rotateY(camY).unit();
-            let val = trace(scene.camera, dir, 0);
-            drawPixel(x, y, val.x, val.y, val.z);  
+            let dir = new Vector(x - CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - y, -CANVAS_HEIGHT);
+
+            // Rotate the camera by applying a rotation matrix
+            let pos = scene.camera.rotatePivot(CAMERA_ROTATION, CAMERA_PIVOT);
+            dir = dir.rotatePivot(CAMERA_ROTATION, CAMERA_PIVOT).unit();
+
+            let clr = trace(pos, dir, 0);
+            drawPixel(x, y, clr.x, clr.y, clr.z);  
         }
     }
     context.putImageData(data, 0, 0);
