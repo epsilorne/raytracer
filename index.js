@@ -1,5 +1,5 @@
 import { Vector } from './Vector.js';
-import { Sphere } from './Objects.js';
+import { Sphere, Plane } from './Objects.js';
 
 /* DISPLAY & RENDERING PARAMETERS */
 const CANVAS_WIDTH = 512;
@@ -18,15 +18,14 @@ let CAMERA_PIVOT = new Vector(0, 0, 0);
 
 /* OBJECTS AND LIGHTING TO BE RENDERED */
 let scene = {
-    camera: new Vector(0, 0, 5),
+    camera: new Vector(0, 1, 7),
     objects: [ 
-        // x, y, z, radius, r, g, b, shiny
-
-        new Sphere(0.6, -1, 2, 0.25, 201, 26, 70, false), // red
-        new Sphere(-0.8, 1, -1, 2, 255, 255, 255, true), // mirror
-        new Sphere(1.5, 0, 1, 1, 85, 199, 50, false), // green
-        new Sphere(-1, -0.5, 2, 0.5, 68, 73, 201, false), // blue
-        new Sphere(0, -996, -100, 1000, 255, 255, 255, false) // ground
+        // (x, y, z), radius, (r, g, b), shiny
+        new Sphere(new Vector(0.6, 0.25, 2), 0.25, new Vector(201, 26, 70), false), // red
+        new Sphere(new Vector(-0.8, 2, -1), 2, new Vector(255, 255, 255), true), // mirror
+        new Sphere(new Vector(1.5, 1, 1), 1, new Vector(85, 199, 50), false), // green
+        new Sphere(new Vector(-1, 0.5, 2), 0.5, new Vector(68, 73, 201), false), // blue
+        new Plane(new Vector(0, 0, 0), new Vector(0, 1, 0), new Vector(255, 255, 255), false) // ground
     ],
     lights: [ 
         new Vector(100, 100, 200),
@@ -111,7 +110,7 @@ function trace(origin, direction, depth) {
     /* CALCULATE REFLECTIONS AND SHADOWS */
     // Pt represents the ray contact-point on the sphere
     let pt = origin.add(direction.scalar(distance));
-    let norm = (pt.subtract(closest.centre)).unit();
+    let norm = !(closest instanceof Plane) ? (pt.subtract(closest.centre)).unit() : closest.norm;
     let colour = closest.colour.scalar(0.1);
 
     scene.lights.forEach((light) => {
@@ -129,19 +128,14 @@ function trace(origin, direction, depth) {
 
         // Apply Lambert (diffuse) shading
         let lambert = Math.max(0, lightDir.dotProduct(norm));
-        if(!closest.shiny){
-            colour = colour.add((closest.colour).scalar(lambert).scalar(DIFFUSE).scalar(seenByLight));
-        }
-        else{
-            colour = colour.add((closest.colour).scalar(lambert).scalar(DIFFUSE).scalar(seenByLight).scalar(0.5));
-        }
+        colour = colour.add((closest.colour).scalar(lambert).scalar(DIFFUSE).scalar(seenByLight));
 
         // Apply reflections recursively with a reflected ray
         if(depth < MAX_REFLECTION_ITERATIONS && closest.shiny){
             /* Uses the formula: r = -2 (d.n)n + d
             where d = original direciton vector, n = normal vector */
             let reflectDir = norm.scalar(-2 * direction.dotProduct(norm)).add(direction);
-            colour = colour.add(trace(pt, reflectDir, depth + 1).scalar(REFLECTION_INTENSITY));
+            colour = colour.add(trace(pt, reflectDir, depth + 1)).scalar(REFLECTION_INTENSITY);
         }
 
         // Applying Blinn-Phong (specular) reflection

@@ -2,14 +2,16 @@ import { Vector } from './Vector.js';
 
 export class Sphere {
     /**
-     * Creates a new sphere object.
-     * @param {Vector} centre The centre of the sphere.
-     * @param {Number} radius The radius of the sphere.
+     * Generate a new sphere object.
+     * @param {Vector} centre The centre coordinates.
+     * @param {Number} radius The radius.
+     * @param {Vector} colour The local colour.
+     * @param {Boolean} shiny Whether the surface will be shiny.
      */
-    constructor(x, y, z, radius, r, g, b, shiny){
-        this.centre = new Vector(x, y, z);
+    constructor(centre, radius, colour, shiny){
+        this.centre = centre;
         this.radius = radius;
-        this.colour = new Vector(r, g, b);
+        this.colour = colour;
         this.shiny = shiny;
     }
 
@@ -39,5 +41,41 @@ export class Sphere {
         if (distance > 0.01) return distance;
 
         return NaN;
+    }
+}
+
+export class Plane {
+    constructor(centre, normal, colour, shiny){
+        this.centre = centre;
+        this.norm = normal;
+        this.colour = colour;
+        this.shiny = shiny;
+    }
+    intersection(origin, direction){
+
+        let denom = direction.dotProduct(this.norm);
+
+        if(Math.abs(denom) >= 0) {
+            let diff = this.centre.subtract(origin);
+            let t = diff.dotProduct(this.norm) / denom;
+
+            if (t > 0.001){
+                return t;
+            }
+        }
+
+        return NaN;
+
+        // let a = this.centre.subtract(origin).dotProduct(this.dir);
+        // let b = direction.dotProduct(this.dir);
+
+        // if(b > 0.00001){
+        //     let result = a / b;
+        //     if(result >= 0){
+        //         return result;
+        //     }
+        // }
+
+        // return NaN;
     }
 }
